@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prototipo de referencia (JSX legacy servido por Babel-standalone, no es código de la app).
+    "references/**",
   ]),
 ]);
 

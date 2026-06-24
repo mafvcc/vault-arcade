@@ -105,7 +105,11 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ===== app frame ===== */
-.av-main { flex: 1; }
+/* isolation:isolate da a su propio contexto de apilado al contenido principal
+   para que pinte limpio sobre los fondos fijos con mix-blend-mode (.av-bg/.av-noise).
+   Sin esto, el texto sin contexto de apilado propio (subtítulo, chips) se pierde
+   bajo la capa de mezcla en el render SSR de Next. */
+.av-main { flex: 1; isolation: isolate; }
 
 /* ===== pixel + neon text ===== */
 .pixel { font-family: var(--pixel); letter-spacing: 0.04em; line-height: 1.25; text-transform: uppercase; }

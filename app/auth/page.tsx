@@ -15,12 +15,12 @@ export default function Auth() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     login({ name: (user || "PLAYER1").toUpperCase().slice(0, 10) });
-    router.push("/");
+    router.push("/juego");
   };
 
   const playAsGuest = () => {
     signOut();
-    router.push("/");
+    router.push("/juego");
   };
 
   return (

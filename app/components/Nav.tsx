@@ -12,9 +12,7 @@ export default function Nav() {
 
   // Biblioteca queda activa también en el detalle y el reproductor.
   const isLibrary =
-    pathname === "/" ||
-    pathname.startsWith("/juego") ||
-    pathname.startsWith("/jugar");
+    pathname.startsWith("/juego") || pathname.startsWith("/jugar");
   const isSalon = pathname.startsWith("/salon");
   const isAuth = pathname.startsWith("/auth");
 
@@ -23,14 +21,14 @@ export default function Nav() {
   return (
     <>
       <nav className="av-nav">
-        <Link className="logo" href="/" onClick={close}>
+        <Link className="logo" href="/juego" onClick={close}>
           <div className="logo-mark"></div>
           <div className="logo-text neon-cyan">
             ARCADE <span className="neon-magenta">VAULT</span>
           </div>
         </Link>
         <div className="links">
-          <Link className={isLibrary ? "active" : ""} href="/" onClick={close}>
+          <Link className={isLibrary ? "active" : ""} href="/juego" onClick={close}>
             Biblioteca
           </Link>
           <Link className={isSalon ? "active" : ""} href="/salon" onClick={close}>
@@ -68,7 +66,7 @@ export default function Nav() {
         <div className="pixel neon-cyan" style={{ fontSize: 11, marginBottom: 16 }}>
           MENÚ
         </div>
-        <Link className={isLibrary ? "active" : ""} href="/" onClick={close}>
+        <Link className={isLibrary ? "active" : ""} href="/juego" onClick={close}>
           Biblioteca
         </Link>
         <Link className={isSalon ? "active" : ""} href="/salon" onClick={close}>

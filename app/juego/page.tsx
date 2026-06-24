@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { GAMES, CATS } from "@/lib/data";
-import GameCard from "./components/GameCard";
+import GameCard from "../components/GameCard";
 
 export default function Home() {
   const [q, setQ] = useState("");

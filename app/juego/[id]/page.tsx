@@ -62,7 +62,7 @@ export default async function GameDetail({
             <Link className="btn xl pulse" href={`/jugar/${game.id}`}>
               ▶ &nbsp;JUGAR AHORA
             </Link>
-            <Link className="btn ghost lg" href="/">
+            <Link className="btn ghost lg" href="/juego">
               VOLVER AL VAULT
             </Link>
           </div>

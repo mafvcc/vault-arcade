@@ -161,7 +161,7 @@ export default function GamePlayer({
               </button>
               <button
                 className="btn magenta"
-                onClick={() => router.push("/")}
+                onClick={() => router.push("/juego")}
               >
                 VOLVER AL VAULT
               </button>

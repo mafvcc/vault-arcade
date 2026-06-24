@@ -1,0 +1,48 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - link "ARCADE VAULT" [ref=e3] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e5]: ARCADE VAULT
+    - link "Iniciar Sesión" [ref=e6] [cursor=pointer]:
+      - /url: /auth
+    - button "Menú" [ref=e7] [cursor=pointer]: ≡
+  - complementary [ref=e8]:
+    - generic [ref=e9]: MENÚ
+    - link "Inicio" [ref=e10] [cursor=pointer]:
+      - /url: /
+    - link "Biblioteca" [ref=e11] [cursor=pointer]:
+      - /url: /juego
+    - link "Salón de la Fama" [ref=e12] [cursor=pointer]:
+      - /url: /salon
+    - link "Sobre Nosotros" [ref=e13] [cursor=pointer]:
+      - /url: /about
+    - link "Iniciar Sesión" [ref=e14] [cursor=pointer]:
+      - /url: /auth
+    - generic [ref=e16]: CRÉDITOS · 03
+  - main [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e21]:
+            - generic [ref=e22]: Jugador
+            - generic [ref=e23]: INVITADO
+          - generic [ref=e24]:
+            - generic [ref=e25]: Puntuación
+            - generic [ref=e26]: "0"
+          - generic [ref=e27]:
+            - generic [ref=e28]: Vidas
+            - generic [ref=e29]: ♥ ♥ ♥
+          - generic [ref=e30]:
+            - generic [ref=e31]: Nivel
+            - generic [ref=e32]: "01"
+        - generic [ref=e33]:
+          - button "PAUSA" [ref=e34] [cursor=pointer]
+          - button "FIN" [ref=e35] [cursor=pointer]
+          - button "SALIR" [ref=e36] [cursor=pointer]
+      - generic [ref=e37]:
+        - generic "ASTEROIDES — área de juego" [ref=e39]
+        - generic [ref=e40]:
+          - generic [ref=e41]: SEÑAL OK
+          - generic [ref=e42]: ASTEROIDES · CRT-83 · 60 HZ
+          - generic [ref=e43]: CARGA · 1MB
+  - contentinfo [ref=e44]: © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0

@@ -1,0 +1,121 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - link "ARCADE VAULT" [ref=e3] [cursor=pointer]:
+      - /url: /
+      - generic [ref=e5]: ARCADE VAULT
+    - generic [ref=e6]:
+      - link "Inicio" [ref=e7] [cursor=pointer]:
+        - /url: /
+      - link "Biblioteca" [ref=e8] [cursor=pointer]:
+        - /url: /juego
+      - link "Salón de la Fama" [ref=e9] [cursor=pointer]:
+        - /url: /salon
+      - link "Sobre Nosotros" [ref=e10] [cursor=pointer]:
+        - /url: /about
+    - generic [ref=e13]: CRÉDITOS · 03
+    - link "Iniciar Sesión" [ref=e14] [cursor=pointer]:
+      - /url: /auth
+  - complementary [ref=e15]:
+    - generic [ref=e16]: MENÚ
+    - link "Inicio" [ref=e17] [cursor=pointer]:
+      - /url: /
+    - link "Biblioteca" [ref=e18] [cursor=pointer]:
+      - /url: /juego
+    - link "Salón de la Fama" [ref=e19] [cursor=pointer]:
+      - /url: /salon
+    - link "Sobre Nosotros" [ref=e20] [cursor=pointer]:
+      - /url: /about
+    - link "Iniciar Sesión" [ref=e21] [cursor=pointer]:
+      - /url: /auth
+    - generic [ref=e23]: CRÉDITOS · 03
+  - main [ref=e24]:
+    - generic [ref=e25]:
+      - generic [ref=e26]:
+        - generic [ref=e28]: ▲
+        - generic [ref=e29]:
+          - generic [ref=e30]:
+            - generic [ref=e31]: SHOOTER
+            - generic [ref=e32]: 1 JUGADOR
+            - generic [ref=e33]: TECLADO / TÁCTIL
+            - generic [ref=e34]: RETRO 1985
+          - heading "ASTEROIDES" [level=2] [ref=e35]
+          - paragraph [ref=e36]: Pilota una nave en un campo de asteroides toroidal. Dispara para partir las rocas en fragmentos cada vez más pequeños y recoge el power-up de triple disparo. El espacio no perdona.
+          - generic [ref=e37]:
+            - generic [ref=e38]:
+              - generic [ref=e39]: Partidas
+              - generic [ref=e40]: "0"
+            - generic [ref=e41]:
+              - generic [ref=e42]: Mejor global
+              - generic [ref=e43]: "39.750"
+            - generic [ref=e44]:
+              - generic [ref=e45]: Dificultad
+              - generic [ref=e46]: ★ ★ ★ ☆ ☆
+          - generic [ref=e47]:
+            - link "▶ JUGAR AHORA" [ref=e48] [cursor=pointer]:
+              - /url: /jugar/asteroides
+            - link "VOLVER AL VAULT" [ref=e49] [cursor=pointer]:
+              - /url: /juego
+      - complementary [ref=e50]:
+        - generic [ref=e51]:
+          - heading "MEJORES PUNTUACIONES" [level=3] [ref=e52]
+          - generic [ref=e53]:
+            - generic [ref=e54]: "#01"
+            - generic [ref=e55]:
+              - text: PX_KAI
+              - generic [ref=e56]: 26/06/2026
+            - generic [ref=e57]: "269.985"
+          - generic [ref=e58]:
+            - generic [ref=e59]: "#02"
+            - generic [ref=e60]:
+              - text: RETROVIRA
+              - generic [ref=e61]: 23/10/2026
+            - generic [ref=e62]: "251.253"
+          - generic [ref=e63]:
+            - generic [ref=e64]: "#03"
+            - generic [ref=e65]:
+              - text: SCANLINE
+              - generic [ref=e66]: 14/05/2026
+            - generic [ref=e67]: "209.839"
+          - generic [ref=e68]:
+            - generic [ref=e69]: "#04"
+            - generic [ref=e70]:
+              - text: BIT_LORD
+              - generic [ref=e71]: 07/09/2026
+            - generic [ref=e72]: "205.389"
+          - generic [ref=e73]:
+            - generic [ref=e74]: "#05"
+            - generic [ref=e75]:
+              - text: VECTORX
+              - generic [ref=e76]: 14/10/2026
+            - generic [ref=e77]: "182.751"
+          - generic [ref=e78]:
+            - generic [ref=e79]: "#06"
+            - generic [ref=e80]:
+              - text: JOY_STK
+              - generic [ref=e81]: 01/08/2026
+            - generic [ref=e82]: "147.815"
+          - generic [ref=e83]:
+            - generic [ref=e84]: "#07"
+            - generic [ref=e85]:
+              - text: RGB_QUEEN
+              - generic [ref=e86]: 09/11/2026
+            - generic [ref=e87]: "131.842"
+          - generic [ref=e88]:
+            - generic [ref=e89]: "#08"
+            - generic [ref=e90]:
+              - text: NEONFOX
+              - generic [ref=e91]: 27/07/2026
+            - generic [ref=e92]: "130.447"
+          - generic [ref=e93]:
+            - generic [ref=e94]: "#09"
+            - generic [ref=e95]:
+              - text: Z3R0COOL
+              - generic [ref=e96]: 13/09/2026
+            - generic [ref=e97]: "124.629"
+          - generic [ref=e98]:
+            - generic [ref=e99]: "#10"
+            - generic [ref=e100]:
+              - text: PIXEL_DAD
+              - generic [ref=e101]: 14/12/2026
+            - generic [ref=e102]: "99.230"
+  - contentinfo [ref=e103]: © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0

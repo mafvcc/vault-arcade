@@ -10,6 +10,7 @@ export default function Nav() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
 
+  const isHome = pathname === "/";
   // Biblioteca queda activa también en el detalle y el reproductor.
   const isLibrary =
     pathname.startsWith("/juego") || pathname.startsWith("/jugar");
@@ -21,13 +22,16 @@ export default function Nav() {
   return (
     <>
       <nav className="av-nav">
-        <Link className="logo" href="/juego" onClick={close}>
+        <Link className="logo" href="/" onClick={close}>
           <div className="logo-mark"></div>
           <div className="logo-text neon-cyan">
             ARCADE <span className="neon-magenta">VAULT</span>
           </div>
         </Link>
         <div className="links">
+          <Link className={isHome ? "active" : ""} href="/" onClick={close}>
+            Inicio
+          </Link>
           <Link className={isLibrary ? "active" : ""} href="/juego" onClick={close}>
             Biblioteca
           </Link>
@@ -66,6 +70,9 @@ export default function Nav() {
         <div className="pixel neon-cyan" style={{ fontSize: 11, marginBottom: 16 }}>
           MENÚ
         </div>
+        <Link className={isHome ? "active" : ""} href="/" onClick={close}>
+          Inicio
+        </Link>
         <Link className={isLibrary ? "active" : ""} href="/juego" onClick={close}>
           Biblioteca
         </Link>

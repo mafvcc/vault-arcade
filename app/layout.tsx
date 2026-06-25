@@ -1,8 +1,32 @@
 import type { Metadata } from "next";
-import { Press_Start_2P, JetBrains_Mono, Courier_Prime } from "next/font/google";
+import {
+  Press_Start_2P,
+  JetBrains_Mono,
+  Courier_Prime,
+} from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./components/AuthProvider";
+import { GamesProvider } from "./components/GamesProvider";
 import Nav from "./components/Nav";
+import { createClient } from "@/lib/supabase/server";
+import type { Game, GameColor } from "@/lib/data";
+
+// Lee el catálogo desde la tabla `games` (ordenado por `position`) y lo mapea al
+// tipo `Game`. Si la lectura falla (BD caída, env mal), degrada a lista vacía en
+// vez de tumbar toda la app.
+async function loadGames(): Promise<Game[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("games")
+      .select("id, title, short, long, cat, cover, color, best, plays")
+      .order("position", { ascending: true });
+    if (error || !data) return [];
+    return data.map((g) => ({ ...g, color: g.color as GameColor }));
+  } catch {
+    return [];
+  }
+}
 
 // Pixel display font (only ships weight 400)
 const pressStart = Press_Start_2P({
@@ -30,11 +54,13 @@ export const metadata: Metadata = {
   description: "Online gaming platform to compete for points",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const games = await loadGames();
+
   return (
     <html
       lang="es"
@@ -44,21 +70,23 @@ export default function RootLayout({
         <div className="av-bg"></div>
         <div className="av-noise"></div>
         <AuthProvider>
-          <Nav />
-          <main className="av-main">{children}</main>
-          <footer
-            style={{
-              borderTop: "1px solid var(--line)",
-              padding: "20px 32px",
-              textAlign: "center",
-              color: "var(--ink-faint)",
-              fontFamily: "var(--mono)",
-              fontSize: 11,
-              letterSpacing: "0.16em",
-            }}
-          >
-            © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
-          </footer>
+          <GamesProvider games={games}>
+            <Nav />
+            <main className="av-main">{children}</main>
+            <footer
+              style={{
+                borderTop: "1px solid var(--line)",
+                padding: "20px 32px",
+                textAlign: "center",
+                color: "var(--ink-faint)",
+                fontFamily: "var(--mono)",
+                fontSize: 11,
+                letterSpacing: "0.16em",
+              }}
+            >
+              © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
+            </footer>
+          </GamesProvider>
         </AuthProvider>
       </body>
     </html>

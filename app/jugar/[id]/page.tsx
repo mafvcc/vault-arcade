@@ -2,7 +2,8 @@
 
 import { use } from "react";
 import { notFound } from "next/navigation";
-import { GAMES, type Game } from "@/lib/data";
+import { type Game } from "@/lib/data";
+import { useGames } from "@/app/components/GamesProvider";
 import MockPlayer from "./MockPlayer";
 import AsteroidsPlayer from "./AsteroidsPlayer";
 
@@ -18,6 +19,7 @@ export default function GamePlayer({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
+  const GAMES = useGames();
   const game = GAMES.find((g) => g.id === id);
 
   if (!game) notFound();

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useSyncExternalStore } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export type User = { name: string } | null;
 
@@ -14,7 +15,7 @@ type AuthContextValue = {
   user: User;
   login: (user: { name: string }) => void;
   signOut: () => void;
-  saveScore: (entry: ScoreEntry) => void;
+  saveScore: (entry: ScoreEntry) => Promise<void>;
 };
 
 const USER_KEY = "av_user";
@@ -78,11 +79,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (u: { name: string }) => writeUser(u);
   const signOut = () => writeUser(null);
 
-  const saveScore = (entry: ScoreEntry) => {
+  const saveScore = async (entry: ScoreEntry) => {
     try {
-      const all = JSON.parse(localStorage.getItem("av_scores") || "[]");
-      all.push({ ...entry, at: Date.now() });
-      localStorage.setItem("av_scores", JSON.stringify(all));
+      const supabase = createClient();
+      await supabase.from("scores").insert({
+        game_id: entry.game,
+        player_name: entry.name,
+        score: entry.score,
+      });
     } catch {}
   };
 

@@ -810,22 +810,36 @@ a {
   filter: drop-shadow(0 0 6px rgba(255, 0, 110, 0.6));
 }
 
+/* Portada de Snake (id "snake"); verde, grilla + serpiente en celdas + fruta. */
 .cover-snake {
-  background: linear-gradient(135deg, #003a2a, #0a0a18);
+  background: radial-gradient(circle at 50% 40%, #003a2a, #0a0a18 80%);
+}
+.cover-snake::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Cuadrícula tenue, como el tablero del juego. */
+  background-image:
+    linear-gradient(0deg, rgba(0, 255, 136, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.12) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 .cover-snake::after {
   content: "";
   position: absolute;
   inset: 0;
+  /* Serpiente en forma de L (celdas verdes) y una fruta (punto magenta). */
   background-image:
-    radial-gradient(circle at 70% 50%, var(--magenta) 0 6px, transparent 7px),
-    linear-gradient(90deg, var(--green) 0 40px, transparent 40px) 20% 50% /
-      200px 12px no-repeat,
-    linear-gradient(90deg, var(--green) 0 12px, transparent 12px)
-      calc(20% + 40px) calc(50% - 12px) / 12px 12px no-repeat,
-    linear-gradient(90deg, var(--green) 0 12px, transparent 12px)
-      calc(20% + 28px) calc(50% - 12px) / 12px 12px no-repeat;
+    linear-gradient(var(--green), var(--green)) 22% 40%/20px 20px no-repeat,
+    linear-gradient(var(--green), var(--green)) calc(22% + 22px) 40%/20px 20px
+      no-repeat,
+    linear-gradient(var(--green), var(--green)) calc(22% + 44px) 40%/20px 20px
+      no-repeat,
+    linear-gradient(var(--green), var(--green)) calc(22% + 44px) 62%/20px 20px
+      no-repeat,
+    radial-gradient(circle at 74% 64%, var(--magenta) 0 7px, transparent 8px);
   filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
+  image-rendering: pixelated;
 }
 
 .cover-glot {

@@ -102,24 +102,99 @@ export function create[Game]Game(
 
 Reemplaza **cada uso** de las constantes de color hardcodeadas por referencias a `p.*` dentro del motor. Elimina las constantes antiguas una vez reemplazadas.
 
-### Paso 3: Actualizar el wrapper React (`app/jugar/[game-id]/[Game]Player.tsx`)
+La variable `p` debe declararse con `let` (no `const`) para poder actualizarse en caliente:
 
-Añade la prop `skin` al componente. Si el wrapper aún no tiene selector de skin, usa `"clasico"` por defecto:
+```typescript
+let p = SKINS[skin];
+```
+
+### Paso 3: Exponer `setSkin` en el motor
+
+El motor debe exportar un método `setSkin` que actualice la paleta sin reiniciar la partida. Añádelo al objeto/instancia que devuelve el factory:
+
+```typescript
+// Dentro del motor, en el objeto retornado:
+setSkin(newSkin: SkinId): void {
+  p = SKINS[newSkin];
+},
+```
+
+Asegúrate de que el tipo `[Game]Game` (interfaz pública del motor) incluya este método:
+
+```typescript
+export interface [Game]Game {
+  start(): void;
+  stop(): void;
+  pause(): void;
+  resume(): void;
+  restart(): void;
+  setSkin(skin: SkinId): void; // ← nuevo
+}
+```
+
+El loop de render ya usa `p.*` en cada frame, por lo que el cambio de paleta se aplica en el siguiente tick sin ninguna acción adicional.
+
+### Paso 4: Actualizar el wrapper React (`app/jugar/[game-id]/[Game]Player.tsx`)
+
+Implementa el selector de skin con cambio en caliente. El patrón **obligatorio** tiene tres partes:
+
+**4a. Constante de opciones y estado:**
 
 ```typescript
 import type { SkinId } from "@/lib/data";
 
-interface [Game]PlayerProps {
-  skin?: SkinId;
-  // ... otras props existentes
-}
+const SKIN_OPTIONS: { id: SkinId; label: string }[] = [
+  { id: "clasico", label: "CLÁSICO" },
+  { id: "neon", label: "NEÓN" },
+  { id: "retro", label: "RETRO" },
+];
 
-export function [Game]Player({ skin = "clasico", ...rest }: [Game]PlayerProps) {
-  // En el useEffect donde se crea el motor:
-  const engine = create[Game]Game(canvas, callbacks, { skin });
+// Dentro del componente:
+const [skin, setSkin] = useState<SkinId>(initialSkin ?? "clasico");
 ```
 
-### Paso 4: Verificar
+**4b. Motor creado una sola vez con el skin inicial; efecto separado para cambios en caliente:**
+
+```typescript
+// useEffect de montaje — crea el motor UNA sola vez
+useEffect(() => {
+  const canvas = canvasRef.current;
+  if (!canvas) return;
+  const engine = create[Game]Game(canvas, callbacks, { skin });
+  gameRef.current = engine;
+  engine.start();
+  return () => { engine.stop(); gameRef.current = null; };
+  // skin intencionalmente excluido — los cambios van por el efecto de abajo
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, []);
+
+// useEffect de skin — cambia la paleta en caliente sin reiniciar
+useEffect(() => {
+  gameRef.current?.setSkin(skin);
+}, [skin]);
+```
+
+**4c. Selector de skin en el HUD** (dentro de `.hud-actions`, antes de los botones PAUSA/FIN):
+
+```tsx
+<div className="skin-picker" role="group" aria-label="Skin">
+  <span className="l">Skin</span>
+  {SKIN_OPTIONS.map((opt) => (
+    <button
+      key={opt.id}
+      className={`btn ghost${skin === opt.id ? " active" : ""}`}
+      aria-pressed={skin === opt.id}
+      onClick={() => setSkin(opt.id)}
+    >
+      {opt.label}
+    </button>
+  ))}
+</div>
+```
+
+Si el wrapper ya tiene `.hud-actions` con botones PAUSA/FIN/SALIR, inserta el `.skin-picker` al inicio de ese bloque. Si el wrapper no tiene HUD, créalo siguiendo el patrón de `AsteroidsPlayer.tsx`.
+
+### Paso 5: Verificar
 
 ```bash
 npx tsc --noEmit
@@ -137,7 +212,8 @@ Cuando termines, reporta con este formato:
 ### Estado
 ✓ SkinId en lib/data.ts
 ✓ SKINS en lib/games/[game-id].ts
-✓ skin prop en [Game]Player.tsx
+✓ setSkin() expuesto en la interfaz del motor
+✓ skin-picker en [Game]Player.tsx con cambio en caliente
 ✓ tsc sin errores
 
 ### Paletas implementadas
@@ -160,3 +236,6 @@ Cuando termines, reporta con este formato:
 - No cambies la firma pública del factory más allá del tercer argumento opcional.
 - Si el motor tiene múltiples `ctx.fillStyle` / `ctx.strokeStyle` esparcidos, céntralos todos en la paleta; no dejes ningún color hardcodeado escapado.
 - Si ya existe una implementación parcial de skins, evalúa qué falta y completa sin romper lo implementado.
+- `p` siempre `let`, nunca `const` — es el requisito para que `setSkin` funcione en caliente.
+- `setSkin` es **obligatorio** en la interfaz del motor y en el objeto retornado; sin él el wrapper no puede hacer cambio en caliente.
+- El wrapper siempre debe tener el `.skin-picker` con los 3 botones en el HUD. Si no hay HUD, créalo. El cambio de skin nunca reinicia la partida.

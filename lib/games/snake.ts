@@ -7,6 +7,8 @@
 // devuelve `createSnakeGame`. El canvas es la fuente de verdad y empuja
 // score/longitud/fin/reinicio hacia React vía callbacks.
 
+import type { SkinId } from "@/lib/data";
+
 export type SnakeCallbacks = {
   onScore?: (score: number) => void;
   onLength?: (length: number) => void; // longitud de la serpiente (reemplaza onLives/onLevel)
@@ -20,10 +22,44 @@ export type SnakeGame = {
   pause(): void; // congela el update (sigue dibujando el último frame + overlay PAUSA)
   resume(): void; // reanuda
   restart(): void; // reinicia estado y vuelve a 'playing'
+  setSkin(skin: SkinId): void; // cambia la paleta en caliente sin reiniciar
 };
 
 type Cell = { x: number; y: number };
 type GameState = "playing" | "gameover";
+
+// ── Paletas de skins ─────────────────────────────────────────────────────────
+type SnakePalette = {
+  bg: string;
+  grid: string;
+  head: string;
+  body: string;
+  foodFallback: string;
+};
+
+const SKINS: Record<SkinId, SnakePalette> = {
+  clasico: {
+    bg: "#0a140d",
+    grid: "rgba(57, 211, 83, 0.10)",
+    head: "#9bff66",
+    body: "#39d353",
+    foodFallback: "#ff5d5d",
+  },
+  neon: {
+    bg: "#000000",
+    grid: "rgba(0, 255, 255, 0.08)",
+    head: "#00ffff",
+    body: "#ff00ff",
+    foodFallback: "#ffff00",
+  },
+  retro: {
+    bg: "#0d0d1a",
+    grid: "rgba(245, 166, 35, 0.10)",
+    head: "#f5a623",
+    body: "#c47d0e",
+    foodFallback: "#e94560",
+  },
+};
 
 // ── Atlas de frutas (coords portadas de sprites.js; recortes de fruits.png) ──
 type Sprite = { x: number; y: number; w: number; h: number };
@@ -56,6 +92,7 @@ const FRUIT_KEYS = Object.keys(FRUIT_ATLAS);
 export function createSnakeGame(
   canvas: HTMLCanvasElement,
   callbacks: SnakeCallbacks = {},
+  { skin = "clasico" }: { skin?: SkinId } = {},
 ): SnakeGame {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("No se pudo obtener el contexto 2D del canvas");
@@ -71,12 +108,8 @@ export function createSnakeGame(
   const ROWS = H / CELL; // 24
   const STEP_MS = 110; // velocidad constante (sin niveles ni aceleración)
 
-  // Colores fijos (sin leer document.body, SSR-safe).
-  const COL_BG = "#0a140d";
-  const COL_GRID = "rgba(57, 211, 83, 0.10)";
-  const COL_HEAD = "#9bff66";
-  const COL_BODY = "#39d353";
-  const COL_FOOD_FALLBACK = "#ff5d5d";
+  // Paleta activa — let para que setSkin() pueda reemplazarla en caliente.
+  let p = SKINS[skin];
 
   // ── Sprite sheet ──────────────────────────────────────────────────────────
   let fruitsImg: HTMLImageElement | null = null;
@@ -232,7 +265,7 @@ export function createSnakeGame(
 
   // ── Draw ──────────────────────────────────────────────────────────────────
   function drawGrid() {
-    ctx!.strokeStyle = COL_GRID;
+    ctx!.strokeStyle = p.grid;
     ctx!.lineWidth = 1;
     ctx!.beginPath();
     for (let x = 0; x <= COLS; x++) {
@@ -270,7 +303,7 @@ export function createSnakeGame(
       );
     } else {
       // Fallback mientras carga la imagen.
-      ctx!.fillStyle = COL_FOOD_FALLBACK;
+      ctx!.fillStyle = p.foodFallback;
       ctx!.beginPath();
       ctx!.arc(dx + CELL / 2, dy + CELL / 2, CELL / 2 - 3, 0, Math.PI * 2);
       ctx!.fill();
@@ -280,7 +313,7 @@ export function createSnakeGame(
   function drawSnake() {
     for (let i = snake.length - 1; i >= 0; i--) {
       const c = snake[i];
-      ctx!.fillStyle = i === 0 ? COL_HEAD : COL_BODY;
+      ctx!.fillStyle = i === 0 ? p.head : p.body;
       ctx!.fillRect(c.x * CELL + 1, c.y * CELL + 1, CELL - 2, CELL - 2);
     }
   }
@@ -298,7 +331,7 @@ export function createSnakeGame(
   }
 
   function draw() {
-    ctx!.fillStyle = COL_BG;
+    ctx!.fillStyle = p.bg;
     ctx!.fillRect(0, 0, W, H);
     drawGrid();
     drawFruit();
@@ -372,6 +405,9 @@ export function createSnakeGame(
     },
     restart() {
       restartInternal();
+    },
+    setSkin(newSkin: SkinId) {
+      p = SKINS[newSkin];
     },
   };
 }

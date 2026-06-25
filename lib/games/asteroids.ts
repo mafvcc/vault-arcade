@@ -5,6 +5,8 @@
 // devuelve `createAsteroidsGame`. El canvas es la fuente de verdad y empuja
 // score/vidas/nivel/fin/reinicio hacia React vía callbacks.
 
+import type { SkinId } from "@/lib/data";
+
 export type AsteroidsCallbacks = {
   onScore?: (score: number) => void;
   onLives?: (lives: number) => void;
@@ -19,17 +21,73 @@ export type AsteroidsGame = {
   pause(): void; // congela el update (sigue dibujando el último frame)
   resume(): void; // reanuda
   restart(): void; // reinicia score/vidas/nivel y vuelve a 'playing'
+  setSkin(skin: SkinId): void; // cambia la paleta en caliente, sin resetear
 };
 
 type Point = { x: number; y: number };
 type GameState = "playing" | "dead" | "gameover";
 
+// ── Paletas por skin ─────────────────────────────────────────────────────────
+// Todas con fondo oscuro (el arcade es dark-only). Los campos `*Rgb` guardan
+// "r,g,b" para componer rgba() con alpha dinámico (partículas / propulsor).
+type AsteroidsPalette = {
+  bg: string; // fondo del canvas
+  stroke: string; // contorno de nave y asteroides
+  bullet: string; // balas
+  hud: string; // texto del HUD y overlay
+  hudDim: string; // subtítulo del overlay (atenuado)
+  powerup: string; // caja y texto del power-up 3x
+  particleRgb: string; // "r,g,b" de las partículas de explosión
+  flameRgb: string; // "r,g,b" de la llama del propulsor
+};
+
+const SKINS: Record<SkinId, AsteroidsPalette> = {
+  // Clásico: vector blanco sobre negro, power-up cian y propulsor naranja
+  // (los colores originales del motor, solo formalizados).
+  clasico: {
+    bg: "#000000",
+    stroke: "#ffffff",
+    bullet: "#ffffff",
+    hud: "#ffffff",
+    hudDim: "rgba(255,255,255,0.65)",
+    powerup: "#00ffff",
+    particleRgb: "255,255,255",
+    flameRgb: "255,130,0",
+  },
+  // Neon: cyberpunk-arcade. Cian eléctrico sobre negro puro, acentos magenta/lima.
+  neon: {
+    bg: "#000000",
+    stroke: "#00ffff",
+    bullet: "#ffff00",
+    hud: "#00ffff",
+    hudDim: "rgba(0,255,255,0.65)",
+    powerup: "#ff00ff",
+    particleRgb: "0,255,65",
+    flameRgb: "255,102,0",
+  },
+  // Retro: CRT 8-bit. Ámbar (opción B) sobre azul noche; contrasta con el
+  // blanco/cian del clásico para que los 3 skins sean bien distintos.
+  retro: {
+    bg: "#0d0d1a",
+    stroke: "#f5a623",
+    bullet: "#39ff14",
+    hud: "#f5a623",
+    hudDim: "rgba(245,166,35,0.65)",
+    powerup: "#0099ff",
+    particleRgb: "245,166,35",
+    flameRgb: "233,69,96",
+  },
+};
+
 export function createAsteroidsGame(
   canvas: HTMLCanvasElement,
   callbacks: AsteroidsCallbacks = {},
+  { skin = "clasico" }: { skin?: SkinId } = {},
 ): AsteroidsGame {
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("No se pudo obtener el contexto 2D del canvas");
+
+  let p = SKINS[skin]; // p de palette (mutable: setSkin la reemplaza en caliente)
 
   const W = 800;
   const H = 600;
@@ -102,7 +160,7 @@ export function createAsteroidsGame(
     }
 
     draw() {
-      ctx!.fillStyle = "#fff";
+      ctx!.fillStyle = p.bullet;
       ctx!.beginPath();
       ctx!.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       ctx!.fill();
@@ -166,7 +224,7 @@ export function createAsteroidsGame(
       ctx!.save();
       ctx!.translate(this.x, this.y);
       ctx!.rotate(this.rot);
-      ctx!.strokeStyle = "#fff";
+      ctx!.strokeStyle = p.stroke;
       ctx!.lineWidth = 1.5;
       ctx!.lineJoin = "round";
       ctx!.beginPath();
@@ -211,12 +269,12 @@ export function createAsteroidsGame(
       ctx!.save();
       ctx!.translate(this.x, this.y);
       ctx!.rotate(Math.PI / 4);
-      ctx!.strokeStyle = "#0ff";
+      ctx!.strokeStyle = p.powerup;
       ctx!.lineWidth = 2;
       const r = this.radius * pulse;
       ctx!.strokeRect(-r, -r, r * 2, r * 2);
       ctx!.restore();
-      ctx!.fillStyle = "#0ff";
+      ctx!.fillStyle = p.powerup;
       ctx!.font = "bold 12px monospace";
       ctx!.textAlign = "center";
       ctx!.textBaseline = "middle";
@@ -305,7 +363,7 @@ export function createAsteroidsGame(
       ctx!.save();
       ctx!.translate(this.x, this.y);
       ctx!.rotate(this.angle);
-      ctx!.strokeStyle = "#fff";
+      ctx!.strokeStyle = p.stroke;
       ctx!.lineWidth = 1.5;
       ctx!.lineJoin = "round";
 
@@ -324,7 +382,7 @@ export function createAsteroidsGame(
         ctx!.moveTo(-8, -4);
         ctx!.lineTo(-8 - rand(6, 14), 0);
         ctx!.lineTo(-8, 4);
-        ctx!.strokeStyle = "rgba(255, 130, 0, 0.85)";
+        ctx!.strokeStyle = `rgba(${p.flameRgb}, 0.85)`;
         ctx!.stroke();
       }
 
@@ -362,7 +420,7 @@ export function createAsteroidsGame(
 
     draw() {
       const alpha = this.ttl / this.life;
-      ctx!.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+      ctx!.strokeStyle = `rgba(${p.particleRgb},${alpha.toFixed(2)})`;
       ctx!.lineWidth = 1;
       ctx!.beginPath();
       ctx!.moveTo(this.x, this.y);
@@ -554,7 +612,7 @@ export function createAsteroidsGame(
     ctx!.save();
     ctx!.translate(x, y);
     ctx!.rotate(-Math.PI / 2);
-    ctx!.strokeStyle = "#fff";
+    ctx!.strokeStyle = p.stroke;
     ctx!.lineWidth = 1.2;
     ctx!.lineJoin = "round";
     ctx!.beginPath();
@@ -568,7 +626,7 @@ export function createAsteroidsGame(
   }
 
   function drawHUD() {
-    ctx!.fillStyle = "#fff";
+    ctx!.fillStyle = p.hud;
     ctx!.font = "15px monospace";
 
     ctx!.textAlign = "left";
@@ -581,23 +639,23 @@ export function createAsteroidsGame(
 
     if (ship.tripleShot > 0) {
       ctx!.textAlign = "left";
-      ctx!.fillStyle = "#0ff";
+      ctx!.fillStyle = p.powerup;
       ctx!.fillText(`3x  ${ship.tripleShot.toFixed(1)}s`, 14, 46);
     }
   }
 
   function drawOverlay(title: string, sub: string) {
     ctx!.textAlign = "center";
-    ctx!.fillStyle = "#fff";
+    ctx!.fillStyle = p.hud;
     ctx!.font = "bold 46px monospace";
     ctx!.fillText(title, W / 2, H / 2 - 18);
     ctx!.font = "18px monospace";
-    ctx!.fillStyle = "rgba(255,255,255,0.65)";
+    ctx!.fillStyle = p.hudDim;
     ctx!.fillText(sub, W / 2, H / 2 + 22);
   }
 
   function draw() {
-    ctx!.fillStyle = "#000";
+    ctx!.fillStyle = p.bg;
     ctx!.fillRect(0, 0, W, H);
 
     particles.forEach((p) => p.draw());
@@ -663,6 +721,12 @@ export function createAsteroidsGame(
       paused = false;
       lastTime = null;
       emitChanges();
+    },
+    setSkin(next) {
+      p = SKINS[next];
+      // El loop repinta cada frame con la nueva paleta; si está en pausa,
+      // forzamos un repintado único para reflejar el cambio al instante.
+      if (paused || !running) draw();
     },
   };
 }

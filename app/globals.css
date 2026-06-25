@@ -1148,6 +1148,35 @@ a {
 .hud-actions {
   display: flex;
   gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.skin-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 10px;
+  margin-right: 4px;
+  border-right: 1px solid var(--ink-faint);
+}
+.skin-picker .l {
+  font-family: var(--pixel);
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+}
+.skin-picker .btn {
+  padding: 8px 12px;
+  font-size: 8px;
+}
+.btn.ghost.active {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow:
+    0 0 12px rgba(0, 245, 255, 0.45),
+    inset 0 0 6px rgba(0, 245, 255, 0.3);
 }
 
 .crt {

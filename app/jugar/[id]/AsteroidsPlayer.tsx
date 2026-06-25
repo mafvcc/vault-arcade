@@ -2,13 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { Game } from "@/lib/data";
+import type { Game, SkinId } from "@/lib/data";
 import { useAuth } from "@/app/components/AuthProvider";
 import { createAsteroidsGame, type AsteroidsGame } from "@/lib/games/asteroids";
 
-export default function AsteroidsPlayer({ game }: { game: Game }) {
+const SKIN_OPTIONS: { id: SkinId; label: string }[] = [
+  { id: "clasico", label: "CLÁSICO" },
+  { id: "neon", label: "NEÓN" },
+  { id: "retro", label: "RETRO" },
+];
+
+export default function AsteroidsPlayer({
+  game,
+  skin: initialSkin = "clasico",
+}: {
+  game: Game;
+  skin?: SkinId;
+}) {
   const router = useRouter();
   const { user, saveScore } = useAuth();
+
+  const [skin, setSkin] = useState<SkinId>(initialSkin);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<AsteroidsGame | null>(null);
@@ -29,22 +43,26 @@ export default function AsteroidsPlayer({ game }: { game: Game }) {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const engine = createAsteroidsGame(canvas, {
-      onScore: setScore,
-      onLives: setLives,
-      onLevel: setLevel,
-      onGameOver: (finalScore) => {
-        setScore(finalScore);
-        setOver(true);
+    const engine = createAsteroidsGame(
+      canvas,
+      {
+        onScore: setScore,
+        onLives: setLives,
+        onLevel: setLevel,
+        onGameOver: (finalScore) => {
+          setScore(finalScore);
+          setOver(true);
+        },
+        // Cubre el reinicio con ESPACIO dentro del canvas: cierra el modal
+        // y resetea el estado React de fin de juego.
+        onPlaying: () => {
+          setOver(false);
+          setSaved(false);
+          setPaused(false);
+        },
       },
-      // Cubre el reinicio con ESPACIO dentro del canvas: cierra el modal
-      // y resetea el estado React de fin de juego.
-      onPlaying: () => {
-        setOver(false);
-        setSaved(false);
-        setPaused(false);
-      },
-    });
+      { skin },
+    );
     gameRef.current = engine;
     engine.start();
     // El contenedor capta el teclado al montar (los flechazos no scrollean).
@@ -54,7 +72,14 @@ export default function AsteroidsPlayer({ game }: { game: Game }) {
       engine.stop();
       gameRef.current = null;
     };
+    // El motor se crea una sola vez; el skin se cambia en caliente (efecto aparte).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Cambia la paleta del motor sin reiniciar la partida.
+  useEffect(() => {
+    gameRef.current?.setSkin(skin);
+  }, [skin]);
 
   const togglePause = () => {
     const engine = gameRef.current;
@@ -107,6 +132,19 @@ export default function AsteroidsPlayer({ game }: { game: Game }) {
           </div>
         </div>
         <div className="hud-actions">
+          <div className="skin-picker" role="group" aria-label="Skin">
+            <span className="l">Skin</span>
+            {SKIN_OPTIONS.map((opt) => (
+              <button
+                key={opt.id}
+                className={`btn ghost${skin === opt.id ? " active" : ""}`}
+                aria-pressed={skin === opt.id}
+                onClick={() => setSkin(opt.id)}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>

@@ -26,6 +26,7 @@ Built with **Spec Driven Design** via the `/spec` and `/spec-impl` skills (from 
 ## Agents
 
 - **`game-planner`** (`.claude/agents/game-planner.md`) — evaluates and proposes games for the platform. Reads `references/implemented-games.md` and `references/game-suggestions-todo.md` before suggesting; writes each suggestion to `game-suggestions-todo.md` as persistent memory. Invoke via `@game-planner` in chat.
+- **`skin-designer`** (`.claude/agents/skin-designer.md`) — ensures every game has the 3 required skins (`clasico`, `neon`, `retro`), all optimized for dark mode. Reads the game engine in `lib/games/[id].ts`, implements the `SKINS` palette object and adds a `skin` param to the factory, then updates the React wrapper. Invoke via `@skin-designer [game-id]` in chat.
 
 ## Stack additions
 

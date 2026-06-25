@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { GAMES, CATS } from "@/lib/data";
+import { CATS } from "@/lib/data";
+import { useGames } from "../components/GamesProvider";
 import GameCard from "../components/GameCard";
 
 export default function Home() {
+  const GAMES = useGames();
   const [q, setQ] = useState("");
   const [cat, setCat] = useState("TODOS");
 
@@ -13,9 +15,9 @@ export default function Home() {
       GAMES.filter(
         (g) =>
           (cat === "TODOS" || g.cat === cat) &&
-          g.title.toLowerCase().includes(q.toLowerCase())
+          g.title.toLowerCase().includes(q.toLowerCase()),
       ),
-    [q, cat]
+    [GAMES, q, cat],
   );
 
   return (
@@ -64,7 +66,11 @@ export default function Home() {
           >
             <div
               className="pixel"
-              style={{ fontSize: 14, color: "var(--magenta)", marginBottom: 12 }}
+              style={{
+                fontSize: 14,
+                color: "var(--magenta)",
+                marginBottom: 12,
+              }}
             >
               NO HAY RESULTADOS
             </div>

@@ -13,6 +13,8 @@
 # testing
 /coverage
 
+/.playwright-screnshots
+
 # next.js
 /.next/
 /out/

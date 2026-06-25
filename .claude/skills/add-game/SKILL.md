@@ -66,11 +66,13 @@ Instancia siempre los puntos de integración con el `id` concreto; no dejes plac
 
 ### Fase 4 — Guardar
 
-Escribe el spec en `specs/NN-<id>-jugable.md` con `Estado: Borrador`. **No escribas código ni toques ningún otro archivo.** Avisa al usuario que revise/apruebe (cambie el estado a Aprobado) y luego ejecute `/spec-impl NN-<id>-jugable` para implementarlo.
+1. **Crea el branch del spec.** Antes de escribir el archivo, parte de `main` actualizada y crea un branch nuevo con el nombre del spec, prefijado con `spec-`: `spec-<NN>-<id>-jugable` (mismo nombre que el archivo del spec sin `.md`), siguiendo la convención del repo (`spec-06-asteroides-jugable`, etc.). Ejecuta `git checkout main && git checkout -b spec-<NN>-<id>-jugable`. Así tanto el spec como su posterior implementación con `/spec-impl` viven en ese branch. Si el branch ya existe, avisa y cámbiate a él en vez de recrearlo.
+2. Escribe el spec en `specs/NN-<id>-jugable.md` con `Estado: Borrador`. **No escribas código ni toques ningún otro archivo.**
+3. Avisa al usuario en qué branch quedó el spec, y que lo revise/apruebe (cambie el estado a Aprobado) y luego ejecute `/spec-impl NN-<id>-jugable` para implementarlo sobre ese mismo branch.
 
 ## Reglas duras
 
-- **No escribes código.** Solo el archivo del spec en `specs/`.
+- **No escribes código.** Solo el archivo del spec en `specs/`. La única acción git permitida es crear el branch del spec en Fase 4 (`spec-<NN>-<id>-jugable`); no commits, no merges, no tocar otros archivos.
 - La inserción del juego en BD es **siempre** una migración versionada (`apply_migration` + commit), nunca un INSERT suelto.
 - `saveScore` y los leaderboards (`/salon`, `/juego/[id]`) **se reutilizan** si ya existen (SPEC 07 hecho); solo se crean en el bloque de bootstrap.
 - El motor es SSR-safe: sin `document`/`window` a nivel de módulo; listeners en `start`/`stop`; estado en el cierre, no global.

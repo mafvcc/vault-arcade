@@ -7,12 +7,14 @@ import { useGames } from "@/app/components/GamesProvider";
 import MockPlayer from "./MockPlayer";
 import AsteroidsPlayer from "./AsteroidsPlayer";
 import TetrisPlayer from "./TetrisPlayer";
+import ArkanoidPlayer from "./ArkanoidPlayer";
 
 // Registry id → reproductor real. Cualquier id no mapeado cae al MockPlayer.
 // Añadir un juego real es una sola entrada aquí.
 const PLAYERS: Record<string, (props: { game: Game }) => React.ReactElement> = {
   asteroides: AsteroidsPlayer,
   tetris: TetrisPlayer,
+  arkanoid: ArkanoidPlayer,
 };
 
 export default function GamePlayer({

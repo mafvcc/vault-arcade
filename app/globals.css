@@ -773,6 +773,43 @@ a {
   opacity: 0.92;
 }
 
+/* Portada de Arkanoid (id "arkanoid"); magenta, pared de ladrillos + paleta y pelota. */
+.cover-arkanoid {
+  background: radial-gradient(circle at 50% 18%, #2a0030, #0a0a18 78%);
+}
+.cover-arkanoid::before {
+  content: "";
+  position: absolute;
+  inset: 12% 14% auto 14%;
+  height: 34%;
+  background:
+    repeating-linear-gradient(
+        90deg,
+        var(--magenta) 0 22%,
+        var(--cyan) 22% 44%,
+        var(--yellow) 44% 66%,
+        var(--green) 66% 88%,
+        var(--magenta) 88% 100%
+      )
+      0 0/100% 25%,
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 24%,
+      rgba(0, 0, 0, 0.55) 24% 25%
+    );
+  filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.45));
+  image-rendering: pixelated;
+}
+.cover-arkanoid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 58% 70%, #fff 0 5px, transparent 6px),
+    linear-gradient(var(--magenta), var(--magenta)) 38% 88%/24% 6% no-repeat;
+  filter: drop-shadow(0 0 6px rgba(255, 0, 110, 0.6));
+}
+
 .cover-snake {
   background: linear-gradient(135deg, #003a2a, #0a0a18);
 }

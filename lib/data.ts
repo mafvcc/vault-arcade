@@ -6,6 +6,8 @@
 
 export type GameColor = "cyan" | "magenta" | "yellow" | "green";
 
+export type SkinId = "neon" | "retro" | "clasico";
+
 export type Game = {
   id: string; // slug, p.ej. "bloque-buster"
   title: string;

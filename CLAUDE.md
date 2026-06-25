@@ -52,6 +52,6 @@ Built with **Spec Driven Design** via the `/spec` and `/spec-impl` skills (from 
 
 ### Games
 
-- Each game is a self-contained TS engine in `lib/games/` (`asteroids`, `tetris`, `arkanoid`, `snake`). No module globals — state lives in the instance from `create<Game>Game()`; canvas is the source of truth and pushes score/lives/etc. to React via callbacks. SSR-safe (Image/Audio created in `start()`).
+- Each game is a self-contained TS engine in `lib/games/` (`asteroids`, `tetris`, `arkanoid`, `snake`, and more...) (see `references/implemented-games.md`). No module globals — state lives in the instance from `create<Game>Game()`; canvas is the source of truth and pushes score/lives/etc. to React via callbacks. SSR-safe (Image/Audio created in `start()`).
 - React wrappers in `app/jugar/[id]/` (`AsteroidsPlayer`, etc.). `page.tsx` holds a `PLAYERS` registry (id → player); unmapped ids fall back to `MockPlayer`. Adding a real game = one registry entry + an engine + a DB row.
 - Assets in `public/games/`, `public/snake-assets/`. Source material ported in `references/started-games/` and `references/resources/`.

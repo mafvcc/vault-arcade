@@ -23,6 +23,10 @@ Arcade Vault — online arcade platform to compete for points (see `README.md`, 
 
 Built with **Spec Driven Design** via the `/spec` and `/spec-impl` skills (from `Klerith/fernando-skills`, installed with `npx skills@latest add Klerith/fernando-skills`). Each feature is a numbered spec in `specs/` shipped via its own PR.
 
+## Agents
+
+- **`game-planner`** (`.claude/agents/game-planner.md`) — evaluates and proposes games for the platform. Reads `references/implemented-games.md` and `references/game-suggestions-todo.md` before suggesting; writes each suggestion to `game-suggestions-todo.md` as persistent memory. Invoke via `@game-planner` in chat.
+
 ## Stack additions
 
 - **Supabase** (`@supabase/ssr`, `@supabase/supabase-js`) — catalog + scores persistence, session.

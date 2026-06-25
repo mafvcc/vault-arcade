@@ -739,6 +739,40 @@ a {
   image-rendering: pixelated;
 }
 
+/* Portada del Tetris real (id "tetris"); magenta, bloques cayendo en pila. */
+.cover-tetris {
+  background: radial-gradient(circle at 50% 0%, #2a0030, #0a0a18 75%);
+}
+.cover-tetris::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(var(--magenta), var(--magenta)) 30% 8%/22px 22px,
+    linear-gradient(var(--magenta), var(--magenta)) 52% 8%/22px 22px,
+    linear-gradient(var(--cyan), var(--cyan)) 41% 28%/22px 22px,
+    linear-gradient(var(--cyan), var(--cyan)) 19% 28%/22px 22px;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.5));
+  image-rendering: pixelated;
+}
+.cover-tetris::after {
+  content: "";
+  position: absolute;
+  inset: auto 18% 0 18%;
+  height: 38%;
+  background:
+    linear-gradient(var(--magenta), var(--magenta)) 0% 100%/16% 50%,
+    linear-gradient(var(--yellow), var(--yellow)) 17% 100%/16% 75%,
+    linear-gradient(var(--green), var(--green)) 34% 100%/16% 40%,
+    linear-gradient(var(--cyan), var(--cyan)) 51% 100%/16% 90%,
+    linear-gradient(var(--magenta), var(--magenta)) 68% 100%/16% 55%,
+    linear-gradient(var(--yellow), var(--yellow)) 85% 100%/16% 70%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  opacity: 0.92;
+}
+
 .cover-snake {
   background: linear-gradient(135deg, #003a2a, #0a0a18);
 }
@@ -1049,6 +1083,16 @@ a {
 .hud-stat.level .v {
   color: var(--yellow);
   text-shadow: 0 0 6px rgba(245, 255, 0, 0.5);
+}
+/* Preview de la pieza siguiente (Tetris): canvas pequeño en el HUD. */
+.hud-stat.next .next-canvas {
+  width: 56px;
+  height: 56px;
+  display: block;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 3px;
+  image-rendering: pixelated;
 }
 .hud-actions {
   display: flex;

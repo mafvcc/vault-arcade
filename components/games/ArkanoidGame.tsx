@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface ArkanoidGameProps {
   paused: boolean;
@@ -123,6 +123,61 @@ const SKINS: Record<string, Skin> = {
     hudColor: '#00ffff',
   },
 };
+
+// ── Neon sprite cache ─────────────────────────────────────────────────────────
+
+const SPRITE_PAD = 20;
+
+interface NeonCache {
+  blocks: Map<BlockColor, HTMLCanvasElement>;
+}
+
+function spriteBlockNeon(color: BlockColor): HTMLCanvasElement {
+  const fill = NEON_BLOCK_COLORS[color] ?? '#888';
+  const r = parseInt(fill.slice(1, 3), 16);
+  const g = parseInt(fill.slice(3, 5), 16);
+  const b = parseInt(fill.slice(5, 7), 16);
+
+  const oc = document.createElement('canvas');
+  oc.width = BLOCK_W + SPRITE_PAD * 2;
+  oc.height = BLOCK_H + SPRITE_PAD * 2;
+  const c = oc.getContext('2d')!;
+
+  c.shadowColor = fill;
+  c.shadowBlur = 12;
+  c.fillStyle = `rgba(${r},${g},${b},0.45)`;
+  c.fillRect(SPRITE_PAD + 1, SPRITE_PAD + 1, BLOCK_W - 2, BLOCK_H - 2);
+
+  c.strokeStyle = fill;
+  c.lineWidth = 1.5;
+  c.shadowBlur = 12;
+  c.strokeRect(
+    SPRITE_PAD + 1.75,
+    SPRITE_PAD + 1.75,
+    BLOCK_W - 3.5,
+    BLOCK_H - 3.5,
+  );
+  c.shadowBlur = 0;
+
+  return oc;
+}
+
+function buildNeonCache(): NeonCache {
+  const blocks = new Map<BlockColor, HTMLCanvasElement>();
+  const colors: BlockColor[] = [
+    'red',
+    'yellow',
+    'cyan',
+    'magenta',
+    'hotpink',
+    'green',
+    'gray',
+  ];
+  for (const color of colors) {
+    blocks.set(color, spriteBlockNeon(color));
+  }
+  return { blocks };
+}
 
 // ── Spritesheet data ──────────────────────────────────────────────────────────
 
@@ -289,7 +344,7 @@ type Explosion = {
   elapsed: number;
 };
 
-export default function ArkanoidGame({
+function ArkanoidGame({
   paused,
   skinKey = 'classic',
   onScoreChange,
@@ -300,6 +355,7 @@ export default function ArkanoidGame({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pausedRef = useRef(paused);
   const skinRef = useRef<Skin>(SKINS[skinKey] ?? SKINS.classic);
+  const neonCacheRef = useRef<NeonCache | null>(null);
 
   useEffect(() => {
     pausedRef.current = paused;
@@ -307,6 +363,7 @@ export default function ArkanoidGame({
 
   useEffect(() => {
     skinRef.current = SKINS[skinKey] ?? SKINS.classic;
+    neonCacheRef.current = skinKey === 'neon' ? buildNeonCache() : null;
   }, [skinKey]);
 
   useEffect(() => {
@@ -528,13 +585,29 @@ export default function ArkanoidGame({
     // ── Draw ─────────────────────────────────────────────────────────────────
     function draw() {
       const skin = skinRef.current;
+      const isNeon = skin === SKINS.neon;
+      const neonCache = neonCacheRef.current;
 
       ctx.fillStyle = skin.boardBg;
       ctx.fillRect(0, 0, W, H);
 
       for (const block of blocks) {
         if (!block.alive) continue;
-        if (skin.drawsBlocks) {
+        if (isNeon && neonCache) {
+          const sprite = neonCache.blocks.get(block.color as BlockColor);
+          if (sprite) {
+            ctx.drawImage(sprite, block.x - SPRITE_PAD, block.y - SPRITE_PAD);
+          } else {
+            skin.drawBlock(
+              ctx,
+              block.x,
+              block.y,
+              block.w,
+              block.h,
+              block.color as BlockColor,
+            );
+          }
+        } else if (skin.drawsBlocks) {
           skin.drawBlock(
             ctx,
             block.x,
@@ -603,13 +676,23 @@ export default function ArkanoidGame({
     // ── Loop ─────────────────────────────────────────────────────────────────
     let rafId: number;
     let lastTime: number | null = null;
+    let pauseDrawn = false;
 
     function loop(timestamp: number) {
       if (lastTime === null) lastTime = timestamp;
       const dt = (timestamp - lastTime) / 1000;
       lastTime = timestamp;
 
-      if (!pausedRef.current) update(dt);
+      if (pausedRef.current) {
+        if (!pauseDrawn) {
+          draw();
+          pauseDrawn = true;
+        }
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+      pauseDrawn = false;
+      update(dt);
       draw();
 
       rafId = requestAnimationFrame(loop);
@@ -674,3 +757,5 @@ export default function ArkanoidGame({
     />
   );
 }
+
+export default React.memo(ArkanoidGame);

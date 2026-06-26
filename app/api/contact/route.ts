@@ -1,48 +1,32 @@
 import { Resend } from "resend";
 
-const TO = "mafvidal@gmail.com";
-const FROM = "onboarding@resend.dev";
-
-type ContactRequest = {
-  name?: string;
-  email?: string;
-  msg?: string;
-};
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
-  let body: ContactRequest;
-  try {
-    body = await request.json();
-  } catch {
-    return Response.json({ error: "Campos incompletos" }, { status: 400 });
-  }
-
-  const name = body.name?.trim();
-  const email = body.email?.trim();
-  const msg = body.msg?.trim();
+  const body = await request.json();
+  const { name, email, msg } = body ?? {};
 
   if (!name || !email || !msg) {
-    return Response.json({ error: "Campos incompletos" }, { status: 400 });
+    return Response.json({ error: "Todos los campos son requeridos." }, { status: 400 });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    return Response.json({ error: "No se pudo enviar" }, { status: 500 });
+  try {
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: "fernando.herrera85@gmail.com",
+      subject: `[Arcade Vault] Mensaje de ${name}`,
+      html: `
+        <h2>Nuevo mensaje de contacto</h2>
+        <p><strong>Nombre:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Mensaje:</strong></p>
+        <p>${msg}</p>
+      `,
+    });
+
+    return Response.json({ ok: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Error desconocido";
+    return Response.json({ error: message }, { status: 500 });
   }
-
-  const resend = new Resend(apiKey);
-
-  const { error } = await resend.emails.send({
-    from: `Arcade Vault <${FROM}>`,
-    to: TO,
-    replyTo: email,
-    subject: `Nuevo mensaje de ${name} — Arcade Vault`,
-    text: `Nombre: ${name}\nCorreo: ${email}\n\n${msg}`,
-  });
-
-  if (error) {
-    return Response.json({ error: "No se pudo enviar" }, { status: 500 });
-  }
-
-  return Response.json({ ok: true });
 }

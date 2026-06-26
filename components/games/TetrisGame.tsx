@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface TetrisGameProps {
   paused: boolean;
@@ -203,7 +203,56 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-export default function TetrisGame({
+// ── Neon sprite cache ────────────────────────────────────────────────────────
+const SPRITE_PAD = 20; // padding so blur is not clipped at canvas edges
+
+interface NeonCache {
+  /** key: color index 1-8; value: offscreen canvas with blur baked in */
+  blocks: Map<number, HTMLCanvasElement>;
+  /** same but at 0.2 alpha (ghost piece) */
+  ghosts: Map<number, HTMLCanvasElement>;
+}
+
+function spriteBlockNeon(
+  color: string,
+  size: number,
+  alpha: number,
+): HTMLCanvasElement {
+  const total = size + SPRITE_PAD * 2;
+  const oc = document.createElement('canvas');
+  oc.width = total;
+  oc.height = total;
+  const oc2 = oc.getContext('2d')!;
+  const r = parseInt(color.slice(1, 3), 16);
+  const g = parseInt(color.slice(3, 5), 16);
+  const b = parseInt(color.slice(5, 7), 16);
+  oc2.shadowBlur = alpha < 0.5 ? 8 : 15;
+  oc2.shadowColor = color;
+  oc2.globalAlpha = alpha;
+  oc2.fillStyle = `rgba(${r},${g},${b},0.55)`;
+  oc2.fillRect(SPRITE_PAD + 1, SPRITE_PAD + 1, size - 2, size - 2);
+  oc2.strokeStyle = color;
+  oc2.lineWidth = 1.5;
+  oc2.strokeRect(SPRITE_PAD + 1.75, SPRITE_PAD + 1.75, size - 3.5, size - 3.5);
+  oc2.shadowBlur = 0;
+  oc2.globalAlpha = 1;
+  return oc;
+}
+
+function buildNeonCache(sk: Skin): NeonCache {
+  const blocks = new Map<number, HTMLCanvasElement>();
+  const ghosts = new Map<number, HTMLCanvasElement>();
+  for (let ci = 1; ci <= 8; ci++) {
+    const color = sk.colors[ci];
+    if (!color) continue;
+    blocks.set(ci, spriteBlockNeon(color, BLOCK, 1));
+    ghosts.set(ci, spriteBlockNeon(color, BLOCK, 0.2));
+  }
+  return { blocks, ghosts };
+}
+// ────────────────────────────────────────────────────────────────────────────
+
+function TetrisGame({
   paused,
   skinKey = 'retro',
   onScoreChange,
@@ -216,6 +265,7 @@ export default function TetrisGame({
 
   const pausedRef = useRef(paused);
   const skinRef = useRef<Skin>(SKINS[skinKey] ?? SKINS.retro);
+  const neonCacheRef = useRef<NeonCache | null>(null);
   const cbScore = useRef(onScoreChange);
   const cbLives = useRef(onLivesChange);
   const cbLevel = useRef(onLevelChange);
@@ -225,7 +275,9 @@ export default function TetrisGame({
     pausedRef.current = paused;
   }, [paused]);
   useEffect(() => {
-    skinRef.current = SKINS[skinKey] ?? SKINS.retro;
+    const sk = SKINS[skinKey] ?? SKINS.retro;
+    skinRef.current = sk;
+    neonCacheRef.current = skinKey === 'neon' ? buildNeonCache(sk) : null;
   }, [skinKey]);
   useEffect(() => {
     cbScore.current = onScoreChange;
@@ -425,6 +477,9 @@ export default function TetrisGame({
 
     function draw() {
       const skin = skinRef.current;
+      const neonCache = neonCacheRef.current;
+      const isNeon = neonCache !== null;
+
       if (skin.boardBg) {
         ctx.fillStyle = skin.boardBg;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -433,33 +488,55 @@ export default function TetrisGame({
       }
       drawGrid();
 
-      for (let r = 0; r < ROWS; r++)
-        for (let c = 0; c < COLS; c++)
-          skin.drawBlock(ctx, c, r, board[r][c], BLOCK);
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const ci = board[r][c];
+          if (ci && isNeon) {
+            const sp = neonCache.blocks.get(ci);
+            if (sp)
+              ctx.drawImage(sp, c * BLOCK - SPRITE_PAD, r * BLOCK - SPRITE_PAD);
+          } else {
+            skin.drawBlock(ctx, c, r, ci, BLOCK);
+          }
+        }
+      }
 
       if (!gameOver) {
         const gy = ghostY();
-        for (let r = 0; r < current.shape.length; r++)
-          for (let c = 0; c < current.shape[r].length; c++)
-            if (current.shape[r][c])
-              skin.drawBlock(
-                ctx,
-                current.x + c,
-                gy + r,
-                current.shape[r][c],
-                BLOCK,
-                0.2,
-              );
+        for (let r = 0; r < current.shape.length; r++) {
+          for (let c = 0; c < current.shape[r].length; c++) {
+            const ci = current.shape[r][c];
+            if (!ci) continue;
+            if (isNeon) {
+              const sp = neonCache.ghosts.get(ci);
+              if (sp)
+                ctx.drawImage(
+                  sp,
+                  (current.x + c) * BLOCK - SPRITE_PAD,
+                  (gy + r) * BLOCK - SPRITE_PAD,
+                );
+            } else {
+              skin.drawBlock(ctx, current.x + c, gy + r, ci, BLOCK, 0.2);
+            }
+          }
+        }
 
-        for (let r = 0; r < current.shape.length; r++)
-          for (let c = 0; c < current.shape[r].length; c++)
-            skin.drawBlock(
-              ctx,
-              current.x + c,
-              current.y + r,
-              current.shape[r][c],
-              BLOCK,
-            );
+        for (let r = 0; r < current.shape.length; r++) {
+          for (let c = 0; c < current.shape[r].length; c++) {
+            const ci = current.shape[r][c];
+            if (ci && isNeon) {
+              const sp = neonCache.blocks.get(ci);
+              if (sp)
+                ctx.drawImage(
+                  sp,
+                  (current.x + c) * BLOCK - SPRITE_PAD,
+                  (current.y + r) * BLOCK - SPRITE_PAD,
+                );
+            } else {
+              skin.drawBlock(ctx, current.x + c, current.y + r, ci, BLOCK);
+            }
+          }
+        }
       }
 
       drawHUD();
@@ -504,11 +581,23 @@ export default function TetrisGame({
       }
     }
 
+    let pauseDrawn = false;
+
     function loop(ts: number) {
       const dt = Math.min(ts - lastTime, 100);
       lastTime = ts;
 
-      if (!pausedRef.current && !gameOver) {
+      if (pausedRef.current) {
+        if (!pauseDrawn) {
+          draw();
+          pauseDrawn = true;
+        }
+        animId = requestAnimationFrame(loop);
+        return;
+      }
+      pauseDrawn = false;
+
+      if (!gameOver) {
         dropAccum += dt;
         if (dropAccum >= dropInterval) {
           dropAccum = 0;
@@ -563,3 +652,5 @@ export default function TetrisGame({
     </div>
   );
 }
+
+export default React.memo(TetrisGame);

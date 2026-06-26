@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface AsteroidsGameProps {
   paused: boolean;
@@ -29,6 +29,90 @@ type Skin = {
   shadowBlur: number;
   shadowColor: string;
 };
+
+// ── Neon sprite cache ─────────────────────────────────────────────────────────
+
+const SPRITE_PAD = 20;
+
+interface NeonCache {
+  bullet: HTMLCanvasElement;
+  ship: HTMLCanvasElement;
+  lifeIcon: HTMLCanvasElement;
+}
+
+function spriteShipNeon(sk: Skin): HTMLCanvasElement {
+  // Ship hull: moveTo(20,0) lineTo(-12,-9) lineTo(-7,0) lineTo(-12,9) close
+  // Bounds: x in [-12,20], y in [-9,9] → w=32, h=18
+  const W = 32 + SPRITE_PAD * 2;
+  const H = 18 + SPRITE_PAD * 2;
+  const oc = document.createElement('canvas');
+  oc.width = W;
+  oc.height = H;
+  const c = oc.getContext('2d')!;
+  c.translate(SPRITE_PAD + 12, SPRITE_PAD + 9); // origin at (12,9) within canvas
+  c.shadowBlur = sk.shadowBlur;
+  c.shadowColor = sk.shipStroke;
+  c.strokeStyle = sk.shipStroke;
+  c.lineWidth = sk.shipLineWidth;
+  c.lineJoin = 'round';
+  c.beginPath();
+  c.moveTo(20, 0);
+  c.lineTo(-12, -9);
+  c.lineTo(-7, 0);
+  c.lineTo(-12, 9);
+  c.closePath();
+  c.stroke();
+  return oc;
+}
+
+function spriteBulletNeon(sk: Skin): HTMLCanvasElement {
+  const r = sk.bulletRadius;
+  const S = r * 2 + SPRITE_PAD * 2;
+  const oc = document.createElement('canvas');
+  oc.width = S;
+  oc.height = S;
+  const c = oc.getContext('2d')!;
+  c.shadowBlur = sk.shadowBlur;
+  c.shadowColor = sk.bulletFill;
+  c.fillStyle = sk.bulletFill;
+  c.beginPath();
+  c.arc(S / 2, S / 2, r, 0, Math.PI * 2);
+  c.fill();
+  return oc;
+}
+
+function spriteLifeIconNeon(sk: Skin): HTMLCanvasElement {
+  // Life icon: moveTo(9,0) lineTo(-6,-5) lineTo(-3,0) lineTo(-6,5) close
+  // drawn rotated -PI/2 around origin, bounds approx [-9,9]x[-9,9]
+  const S = 18 + SPRITE_PAD * 2;
+  const oc = document.createElement('canvas');
+  oc.width = S;
+  oc.height = S;
+  const c = oc.getContext('2d')!;
+  c.translate(S / 2, S / 2);
+  c.rotate(-Math.PI / 2);
+  c.shadowBlur = sk.shadowBlur * 0.6;
+  c.shadowColor = sk.lifeStroke;
+  c.strokeStyle = sk.lifeStroke;
+  c.lineWidth = 1.2;
+  c.lineJoin = 'round';
+  c.beginPath();
+  c.moveTo(9, 0);
+  c.lineTo(-6, -5);
+  c.lineTo(-3, 0);
+  c.lineTo(-6, 5);
+  c.closePath();
+  c.stroke();
+  return oc;
+}
+
+function buildNeonCache(sk: Skin): NeonCache {
+  return {
+    ship: spriteShipNeon(sk),
+    bullet: spriteBulletNeon(sk),
+    lifeIcon: spriteLifeIconNeon(sk),
+  };
+}
 
 const SKINS: Record<string, Skin> = {
   classic: {
@@ -84,7 +168,7 @@ const SKINS: Record<string, Skin> = {
   },
 };
 
-export default function AsteroidsGame({
+function AsteroidsGame({
   paused,
   skinKey = 'classic',
   onScoreChange,
@@ -97,6 +181,7 @@ export default function AsteroidsGame({
   // Refs so the game loop always reads the latest prop values without re-running the effect
   const pausedRef = useRef(paused);
   const skinRef = useRef<Skin>(SKINS[skinKey] ?? SKINS.classic);
+  const neonCacheRef = useRef<NeonCache | null>(null);
   const cbScore = useRef(onScoreChange);
   const cbLives = useRef(onLivesChange);
   const cbLevel = useRef(onLevelChange);
@@ -106,8 +191,17 @@ export default function AsteroidsGame({
     pausedRef.current = paused;
   }, [paused]);
   useEffect(() => {
-    skinRef.current = SKINS[skinKey] ?? SKINS.classic;
+    const sk = SKINS[skinKey] ?? SKINS.classic;
+    skinRef.current = sk;
+    neonCacheRef.current = sk.shadowBlur > 0 ? buildNeonCache(sk) : null;
   }, [skinKey]);
+
+  // Build initial neon cache after first render (skinKey may already be neon)
+  useEffect(() => {
+    const sk = SKINS[skinKey] ?? SKINS.classic;
+    if (sk.shadowBlur > 0) neonCacheRef.current = buildNeonCache(sk);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     cbScore.current = onScoreChange;
   }, [onScoreChange]);
@@ -190,16 +284,18 @@ export default function AsteroidsGame({
       }
       draw() {
         const skin = skinRef.current;
-        ctx.save();
-        if (skin.shadowBlur > 0) {
-          ctx.shadowBlur = skin.shadowBlur;
-          ctx.shadowColor = skin.bulletFill;
+        const neonCache = neonCacheRef.current;
+        if (neonCache) {
+          const s = neonCache.bullet;
+          ctx.drawImage(s, this.x - s.width / 2, this.y - s.height / 2);
+        } else {
+          ctx.save();
+          ctx.fillStyle = skin.bulletFill;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, skin.bulletRadius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
         }
-        ctx.fillStyle = skin.bulletFill;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, skin.bulletRadius, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
       }
     }
 
@@ -219,6 +315,7 @@ export default function AsteroidsGame({
       rotSpeed: number;
       rot: number;
       verts: [number, number][];
+      neonSprite: HTMLCanvasElement | null = null;
       constructor(x: number, y: number, size = 3) {
         this.x = x;
         this.y = y;
@@ -238,6 +335,32 @@ export default function AsteroidsGame({
           const r = this.radius * rand(0.6, 1.0);
           this.verts.push([Math.cos(a) * r, Math.sin(a) * r]);
         }
+        // Bake neon offscreen once if neon skin is active at construction time
+        const sk = skinRef.current;
+        if (sk.shadowBlur > 0) {
+          this.neonSprite = this.bakeNeonSprite(sk);
+        }
+      }
+      bakeNeonSprite(sk: Skin): HTMLCanvasElement {
+        const r = this.radius;
+        const S = r * 2 + SPRITE_PAD * 2;
+        const oc = document.createElement('canvas');
+        oc.width = S;
+        oc.height = S;
+        const c = oc.getContext('2d')!;
+        c.translate(S / 2, S / 2);
+        c.shadowBlur = sk.shadowBlur;
+        c.shadowColor = sk.asteroidStroke;
+        c.strokeStyle = sk.asteroidStroke;
+        c.lineWidth = sk.asteroidLineWidth;
+        c.lineJoin = 'round';
+        c.beginPath();
+        c.moveTo(this.verts[0][0], this.verts[0][1]);
+        for (let i = 1; i < this.verts.length; i++)
+          c.lineTo(this.verts[i][0], this.verts[i][1]);
+        c.closePath();
+        c.stroke();
+        return oc;
       }
       update(dt: number) {
         this.x = wrap(this.x + this.vx * dt, W);
@@ -253,23 +376,28 @@ export default function AsteroidsGame({
       }
       draw() {
         const skin = skinRef.current;
-        ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rot);
-        if (skin.shadowBlur > 0) {
-          ctx.shadowBlur = skin.shadowBlur;
-          ctx.shadowColor = skin.asteroidStroke;
+        if (this.neonSprite && neonCacheRef.current) {
+          const s = this.neonSprite;
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rot);
+          ctx.drawImage(s, -s.width / 2, -s.height / 2);
+          ctx.restore();
+        } else {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rot);
+          ctx.strokeStyle = skin.asteroidStroke;
+          ctx.lineWidth = skin.asteroidLineWidth;
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(this.verts[0][0], this.verts[0][1]);
+          for (let i = 1; i < this.verts.length; i++)
+            ctx.lineTo(this.verts[i][0], this.verts[i][1]);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
         }
-        ctx.strokeStyle = skin.asteroidStroke;
-        ctx.lineWidth = skin.asteroidLineWidth;
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(this.verts[0][0], this.verts[0][1]);
-        for (let i = 1; i < this.verts.length; i++)
-          ctx.lineTo(this.verts[i][0], this.verts[i][1]);
-        ctx.closePath();
-        ctx.stroke();
-        ctx.restore();
       }
     }
 
@@ -332,23 +460,27 @@ export default function AsteroidsGame({
         if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0)
           return;
         const skin = skinRef.current;
+        const neonCache = neonCacheRef.current;
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
-        if (skin.shadowBlur > 0) {
-          ctx.shadowBlur = skin.shadowBlur;
-          ctx.shadowColor = skin.shipStroke;
+        if (neonCache) {
+          // Ship sprite is baked at angle=0; ctx is already rotated to this.angle
+          const s = neonCache.ship;
+          // origin within sprite: (SPRITE_PAD+12, SPRITE_PAD+9)
+          ctx.drawImage(s, -(SPRITE_PAD + 12), -(SPRITE_PAD + 9));
+        } else {
+          ctx.strokeStyle = skin.shipStroke;
+          ctx.lineWidth = skin.shipLineWidth;
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          ctx.moveTo(20, 0);
+          ctx.lineTo(-12, -9);
+          ctx.lineTo(-7, 0);
+          ctx.lineTo(-12, 9);
+          ctx.closePath();
+          ctx.stroke();
         }
-        ctx.strokeStyle = skin.shipStroke;
-        ctx.lineWidth = skin.shipLineWidth;
-        ctx.lineJoin = 'round';
-        ctx.beginPath();
-        ctx.moveTo(20, 0);
-        ctx.lineTo(-12, -9);
-        ctx.lineTo(-7, 0);
-        ctx.lineTo(-12, 9);
-        ctx.closePath();
-        ctx.stroke();
         if (this.thrusting && Math.random() > 0.35) {
           ctx.shadowBlur = 0;
           ctx.beginPath();
@@ -526,25 +658,27 @@ export default function AsteroidsGame({
 
     // ── Draw ─────────────────────────────────────────────────────────────────
     function drawLifeIcon(x: number, y: number) {
-      const skin = skinRef.current;
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(-Math.PI / 2);
-      if (skin.shadowBlur > 0) {
-        ctx.shadowBlur = skin.shadowBlur * 0.6;
-        ctx.shadowColor = skin.lifeStroke;
+      const neonCache = neonCacheRef.current;
+      if (neonCache) {
+        const s = neonCache.lifeIcon;
+        ctx.drawImage(s, x - s.width / 2, y - s.height / 2);
+      } else {
+        const skin = skinRef.current;
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-Math.PI / 2);
+        ctx.strokeStyle = skin.lifeStroke;
+        ctx.lineWidth = 1.2;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        ctx.moveTo(9, 0);
+        ctx.lineTo(-6, -5);
+        ctx.lineTo(-3, 0);
+        ctx.lineTo(-6, 5);
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
       }
-      ctx.strokeStyle = skin.lifeStroke;
-      ctx.lineWidth = 1.2;
-      ctx.lineJoin = 'round';
-      ctx.beginPath();
-      ctx.moveTo(9, 0);
-      ctx.lineTo(-6, -5);
-      ctx.lineTo(-3, 0);
-      ctx.lineTo(-6, 5);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.restore();
     }
 
     function drawHUD() {
@@ -573,12 +707,23 @@ export default function AsteroidsGame({
     // ── Loop ─────────────────────────────────────────────────────────────────
     let rafId: number;
     let lastTime: number | null = null;
+    let pauseDrawn = false;
 
     function loop(ts: number) {
       const dt = lastTime === null ? 0 : Math.min((ts - lastTime) / 1000, 0.05);
       lastTime = ts;
 
-      if (!pausedRef.current) update(dt);
+      if (pausedRef.current) {
+        if (!pauseDrawn) {
+          draw();
+          pauseDrawn = true;
+        }
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+      pauseDrawn = false;
+
+      update(dt);
       draw();
 
       // Notify React of state changes
@@ -626,3 +771,5 @@ export default function AsteroidsGame({
     />
   );
 }
+
+export default React.memo(AsteroidsGame);
